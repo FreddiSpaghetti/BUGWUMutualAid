@@ -1,18 +1,21 @@
 # run-distribution.py
 #
-# given a TSV copy and pasted from google sheets, output a CSV file which can be
-# entered back into a spreadsheet and used to send emails.
+# Given a CSV formatted as in example-everyone.csv, output a CSV file which provides a mutual aid distribution
+# This CSV can then be turned back into a spreadsheet and/or used to send emails with SMTP configured!
 
 from collections import defaultdict
 import random
 import math
 import sys
 
-# TF expected base pay (net pay - strike pay)
-from data.config import TF_BASE
+# TF expected payment per week. Calculated for BUGWU by net pay - strike pay
+TF_Base = 550
 
-rf_donations = {}
-tf_support = {}
+# Decide how to distribute the money, based on individual report need (True) or done equally given the base missing pay (False)
+distribute_need = True
+
+donations = {}
+receive_support = {}
 
 emails = {}
 
@@ -21,78 +24,84 @@ if len(sys.argv) != 2:
 
 with open(sys.argv[1]) as f:
     for line in f:
-        # expects TSV
-        name, email, type, amount = line.split('\t')
+        # expects CSV and inputs data into script, see example-everyone
+        name, email, contribution, amount = line.split(',')
         # optionally remove $ sign
         if amount.startswith('$'):
             amount = int(amount[1:])
         else:
             amount = int(amount)
 
-        if type == 'RF':
+        if contribution == 'send':
             if amount == 0:
                 continue
             
-            rf_donations[name] = amount
-        if type == 'TF':
-            tf_support[name] = amount
+            donations[name] = amount
+        if contribution == 'receive':
+            receive_support[name] = amount
         emails[name] = email
 
-n_rf = len(rf_donations)
-n_tf = len(tf_support)
 
-total_donation = sum(rf_donations.values())
-total_need = sum(tf_support.values())
-print(f"Loaded {n_rf} RFs and {n_tf} TFs.")
-print(f"  Total RF donations: ${total_donation}")
-print(f"  Avg RF donation: ${round(total_donation/n_rf)}")
+# Calculating basic stats and outputting them
+n_send = len(donations)
+n_receive = len(receive_support)
 
-needed_donation = round(total_need / n_rf)
-tf_avg_each = round(total_need / n_tf)
+total_donation = sum(donations.values())
+total_need = sum(receive_support.values())
+print(f"Loaded {n_send} senders and {n_receive} Receivers.")
+print(f"  Total donations: ${total_donation}")
+print(f"  Avg donation: ${round(total_donation/n_send)}")
 
+
+# Calculating the needed donation from each sender to fulfil all needs.
+needed_donation = round(total_need / n_send)
+# Calculating average need for all receivers.
+receive_avg_each = round(total_need / n_receive)
+#Calculating total amount of money sent
+totalSent = needed_donation * n_send
+
+# Calculating how much each senders donation will be used. That is, if donation_scale is 0.6, we will be using
+# 60% of each sender's donation.
+donation_scale = needed_donation/total_donation*n_send
+
+# Printing out diagnostics for the distribution
 print(f"Required joint avg donation: ${needed_donation}")
+print(f"  Sending a total amount of ${totalSent}")
+print(f"  TFs recv total of ${totalSent}, or ${receive_avg_each} each, avg")
+print(f"  TF avg income lost = ${TF_Base} - ${receive_avg_each} = ${TF_Base - receive_avg_each}")
+print(f"  Scale factor: {donation_scale:.2}")
 
-xfer = needed_donation * n_rf
+# Create list of remaining donor amounts
+remaining_donor_amounts = []
 
-scale = needed_donation/total_donation*n_rf
-
-print(f"  RFs send total of ${needed_donation} each = ${xfer}")
-print(f"  TFs recv total of ${xfer}, or ${tf_avg_each} each, avg")
-print(f"  TF avg income lost = ${TF_BASE} - ${tf_avg_each} = ${TF_BASE - tf_avg_each}")
-print(f"  Scale factor: {scale:.2}")
-
-di = []
-
-for k, v in rf_donations.items():
+for k, v in donations.items():
     old_v = v
     # This needs to be `ceil`, because otherwise we could round down too often 
     # and run out of money.
-    di.append((k, min(v, math.ceil(v * scale))))
+    remaining_donor_amounts.append((k, min(v, math.ceil(v * donation_scale))))
 
 output = defaultdict(list)
-
 num_transfers = 0
 
 # Randomize distribution so it's fair.
-random.shuffle(di)
+random.shuffle(remaining_donor_amounts)
 
-for t, amt in tf_support.items():
+for t, amt in receive_support.items():
     print(f"**** {t} (${amt}) ****")
     recv = 0
 
-    ## equal distro
-    # tf_need = TF_BASE
-    ## unique distro
     tf_need = amt
+    if distribute_need == False:
+        tf_need = TF_Base
 
     while recv < tf_need:
-        next_donor, amount = di.pop(0) # pop_next_closest(support - recv)
+        next_donor, amount = remaining_donor_amounts.pop(0) # pop_next_closest(support - recv)
 
         if recv + amount > tf_need:
             leftover = recv + amount - tf_need
             recv = tf_need
             amount -= leftover
-            di.append((next_donor, leftover))
+            remaining_donor_amounts.append((next_donor, leftover))
         else:
             recv += amount
         
@@ -113,6 +122,6 @@ print("from,,,to,amount")
 for d, s in output.items():
     for l in s:
         print(l)
-    print(f"{d},, listed,, ${rf_donations[d]}")
+    print(f"{d},, listed,, ${donations[d]}")
     print()
 

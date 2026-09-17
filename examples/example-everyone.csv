@@ -1,0 +1,4 @@
+## Example of CSV for inputs to run-distribution. Format is: name, email, send/receive, and amount able to send. Done with a CSV.
+Person1,p1@email.com,send,50
+Person2,p2@email.com,receive,0
+Person3,p3@email.com,send,150
