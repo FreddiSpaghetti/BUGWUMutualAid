@@ -1,6 +1,6 @@
 # BUGWU Mutual Aid System
 
-This repository contains the fully documented codebase for the BUGWU Mutual Aid system used in the BUGWU 2024 strike within the math and computer science departments. 
+This repository contains the fully documented codebase for the BUGWU Mutual Aid system used in the BUGWU 2024 strike within the math and computer science departments. Code contributors include Eli, Debanuj, and Eric
 
 There are two main scripts, the first `run-distribution.py` which calculates the distribution of funds between senders and receivers and `send-email.py` which manages all of the email sending to provide some automation.
 
