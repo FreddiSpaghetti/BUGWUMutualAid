@@ -83,12 +83,8 @@ Example output:
 from,email,action,to,amount
 Alice,alice@example.com,sends,Bob,$75
 Alice,alice@example.com,sends,Dana,$25
-Alice,,listed,,$100
 Charlie,charlie@example.com,sends,Bob,$50
-Charlie,,listed,,$75
 ```
-
-Rows marked `sends` are the actual transfer instructions. Rows marked `listed` show how much that donor originally offered to contribute.
 
 ### Summary
 
