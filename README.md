@@ -93,18 +93,6 @@ This script sends mutual aid emails using SMTP. Note that this needs to be confi
 1. **Confirmation emails** asking contributors to confirm their pledged amount.
 2. **Distribution emails** telling contributors who to send money to.
 
-The script currently runs:
-
-```python
-func = distribution_emails
-```
-
-To send confirmation emails instead, change this section to:
-
-```python
-func = confirmation_emails
-```
-
 ### SMTP
 
 The script logs into any SMPT credentials stored in:
@@ -119,7 +107,7 @@ The config file should include:
 AuthUser=your-email@domain.com
 AuthPass=your-password-or-app-password
 ```
-The script connects then using the SMPT call, which you should edit to match your provider:
+which are used in the SMPT call, which you should also edit to match your provider:
 
 ```python
 SMTP("TODO", PORTNUMBERTODO)
