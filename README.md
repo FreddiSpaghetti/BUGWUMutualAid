@@ -157,8 +157,8 @@ from,email,action,to,amount
 Example:
 
 ```text
-Alice	alice@example.com	sends	Bob	$75
-Alice	alice@example.com	sends	Dana	$25
+Alice,alice@example.com,sends,Bob,$75
+Alice,alice@example.com,sends,Dana,$25
 ```
 
 Rows with `sends` are added to the donor’s email. When the script reaches a row with `listed`, it sends the completed email to that donor.
