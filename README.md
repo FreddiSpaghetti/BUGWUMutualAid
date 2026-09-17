@@ -6,7 +6,7 @@ There are two main scripts, the first `run-distribution.py` which calculates the
 
 ## Mutual Aid Distribution Algorithm
 
-This script generates a randomized mutual aid distribution from a CSV of people who are either sending money or receiving support. It outputs a CSV-style list of transfers showing who should send money to whom and how much.
+This script generates a randomized mutual aid distribution from a CSV of people who are either sending money or receiving support. It outputs a CSV `distributions.csv` which list of transfers showing who should send money to whom and how much.
 
 ### Input Format
 
@@ -37,43 +37,13 @@ The algorithm:
 
 1. Loads all senders and receivers from the input CSV.
 2. Calculates total donations and total requested support.
-3. Computes a donation scale factor so only the needed portion of each donor's listed contribution is used.
+3. Computes a donation scale factor so only the needed portion of each donor's listed contribution is used. Critically, **each donor sends an equal amount of their giving contribution amount!**
 4. Randomizes the donor order for fairness.
 5. Assigns donors to recipients until each recipient's requested amount is met.
 6. Splits donor amounts across recipients when needed.
 7. Outputs a CSV-style list of transfers.
 
 Emails are stored for everyone so they can be included in the final output.
-
-### Donation Scale
-
-The script calculates how much of each sender's listed donation should actually be used.
-
-First, it calculates the average amount needed per sender:
-
-```python
-needed_donation = round(total_need / n_send)
-```
-
-Then it calculates the scale factor:
-
-```python
-donation_scale = needed_donation / total_donation * n_send
-```
-
-This is equivalent to:
-
-```python
-donation_scale = total_amount_to_send / total_donation
-```
-
-For example, if donors collectively offered `$2,000`, but only `$1,000` is needed, then:
-
-```python
-donation_scale = 0.5
-```
-
-So each donor is asked to send approximately `50%` of their listed amount.
 
 ### Notes
 
@@ -83,6 +53,42 @@ So each donor is asked to send approximately `50%` of their listed amount.
 - Recipient order follows the order of the input CSV.
 - The current version uses each recipient's individually requested amount.
 - `TF_Base` is currently only used for printed diagnostics, not for determining allocations.
+
+### Output
+
+The script writes the final distribution to a CSV file named `distributions.csv`.
+
+Each row represents either:
+
+1. A transfer from a donor to a recipient, or
+2. The donor’s originally listed donation amount.
+
+The CSV has the following columns:
+
+```csv
+from,email,action,to,amount
+```
+
+Where:
+
+- `from` = the donor’s name
+- `email` = the donor’s email address
+- `action` = either `sends` or `listed`
+- `to` = the recipient’s name, if this row is a transfer
+- `amount` = the amount being sent, or the donor’s original listed amount
+
+Example output:
+
+```csv
+from,email,action,to,amount
+Alice,alice@example.com,sends,Bob,$75
+Alice,alice@example.com,sends,Dana,$25
+Alice,,listed,,$100
+Charlie,charlie@example.com,sends,Bob,$50
+Charlie,,listed,,$75
+```
+
+Rows marked `sends` are the actual transfer instructions. Rows marked `listed` show how much that donor originally offered to contribute.
 
 ### Summary
 
