@@ -8,7 +8,10 @@ import time
 from smtplib import SMTP_SSL as SMTP
 
 # TFs should be listed in here. See README for details
-from data.tfs import tf_info
+from examples.exampleTFs import tf_info
+
+# Send confirmation(False) or distribution(True) emails
+sending_distribution = True
 
 connection = None
 def smtp_login():
@@ -31,8 +34,8 @@ def smtp_login():
     from_addr = configuration['AuthUser']
     password = configuration['AuthPass']
 
-    # Connect to gmail SMTP relay
-    connection = SMTP("smtp.gmail.com", 465)
+    # Connect to Gmail SMTP relay
+    connection = SMTP("TODO", 465)
     # connection.set_debuglevel(True)
     connection.login(from_addr, password)
 
@@ -58,7 +61,7 @@ def send_confirmation_email(name, address, amount):
 
     Best,
 
-    CS Mutual Aid Team
+    Mutual Aid Team
     """)
 
     print("\n" * 10)
@@ -77,7 +80,7 @@ def confirmation_emails(FILE):
             if line.startswith('#'):
                 continue
 
-            name, address, amount = line.split('\t')
+            name, address, amount = line.split(',')
             if amount.startswith('$'):
                 amount = amount[1:]
             amount = int(amount)
@@ -120,12 +123,12 @@ Hi {rf},
 Thank you for contributing to mutual aid! Your money will be supporting the following striking workers for the week of Aug XX-XX.
 {donation_str}
 
-If you can send the money now, please do so using one of the payment methods listed above. Otherwise, send an email to the IoR letting them know you can send your contribution once you get paid for this week.
+If you can send the money now, please do so using one of the payment methods listed above. Otherwise, send an email to the receiver letting them know you can send your contribution once you get paid for this week.
 
 Let us know if you have any difficulties or delays. We're also happy to answer any other questions you may have.
 
 Best,
-Math/CS Mutual Aid Team
+Mutual Aid Team
 
 """)
     print(message)
@@ -169,11 +172,13 @@ def distribution_emails(FILE):
 
     print(f"Sent {num_sent} emails!")
 
+
 func = distribution_emails
-# func = confirmation_emails
+if sending_distribution == False:
+    func = confirmation_emails
 
 if len(sys.argv) != 2:
-    print("please provide an input file")
+    exit("please provide an input file")
 
 
 f = sys.argv[1]

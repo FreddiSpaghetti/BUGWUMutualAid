@@ -1,12 +1,13 @@
 # run-distribution.py
 #
-# Given a CSV formatted as in example-everyone.csv, output a CSV file which provides a mutual aid distribution
+# Given a CSV formatted as in rd_input_example.csv, output a CSV file which provides a mutual aid distribution
 # This CSV can then be turned back into a spreadsheet and/or used to send emails with SMTP configured!
 
 from collections import defaultdict
 import random
 import math
 import sys
+import csv
 
 # TF expected payment per week. Calculated for BUGWU by net pay - strike pay
 TF_Base = 550
@@ -20,7 +21,7 @@ receive_support = {}
 emails = {}
 
 if len(sys.argv) != 2:
-    print("Please provide an input file")
+    exit("Please provide an input file")
 
 with open(sys.argv[1]) as f:
     for line in f:
@@ -109,19 +110,20 @@ for t, amt in receive_support.items():
         num_transfers += 1
 
         output[next_donor].append(f"{next_donor}, {emails[next_donor]}, sends, {t}, ${amount}")
-    print()
-
     assert recv == tf_need
 
 
 print(f"{num_transfers} transfers")
 
-print("-------")
-print("from,,,to,amount")
+with open("examples/rd_output_example.csv", "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["#from", "email", "action", "to", "amount"])
 
-for d, s in output.items():
-    for l in s:
-        print(l)
-    print(f"{d},, listed,, ${donations[d]}")
-    print()
+    for donor, transfers in output.items():
+        for transfer in transfers:
+            # Each transfer is currently stored as a comma-separated string:
+            # "donor, email, sends, recipient, $amount"
+            writer.writerow([field.strip() for field in transfer.split(",")])
+
+print("Wrote distribution to rd_output_example.csv")
 
