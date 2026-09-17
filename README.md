@@ -86,6 +86,96 @@ Alice,alice@example.com,sends,Dana,$25
 Charlie,charlie@example.com,sends,Bob,$50
 ```
 
-### Summary
+## Email Sending Script
 
-In short, the script scales donor contributions to match total need, randomizes donors, then assigns donor amounts to recipients until every recipient has received their requested amount. Donor amounts can be split when necessary, and the final result is a CSV-style transfer list.
+This script sends mutual aid emails using SMTP. Note that this needs to be configured before use! It can send either:
+
+1. **Confirmation emails** asking contributors to confirm their pledged amount.
+2. **Distribution emails** telling contributors who to send money to.
+
+The script currently runs:
+
+```python
+func = distribution_emails
+```
+
+To send confirmation emails instead, change this section to:
+
+```python
+func = confirmation_emails
+```
+
+### SMTP
+
+The script logs into any SMPT credentials stored in:
+
+```text
+data/smtp.conf
+```
+
+The config file should include:
+
+```text
+AuthUser=your-email@domain.com
+AuthPass=your-password-or-app-password
+```
+The script connects then using the SMPT call, which you should edit to match your provider:
+
+```python
+SMTP("TODO", PORTNUMBERTODO)
+```
+
+### TF Payment Information
+
+Distribution emails use recipient payment information from:
+
+```python
+from examples.exampleTFs import tf_info
+```
+
+Each recipient listed in the distribution file must have a matching entry in `tf_info`.
+
+For example, if the distribution includes:
+
+```example from file
+Person3,p3@email.com,sends,Bob,$113
+```
+
+then `tf_info` must contain information for `Bob`.
+
+
+### Distribution Emails
+
+The `distribution_emails(FILE)` function sends each contributor their assigned mutual aid transfers.
+
+The input file is expected to be comma-separated and grouped by donor:
+
+```text
+from,email,action,to,amount
+```
+
+Example:
+
+```text
+Alice	alice@example.com	sends	Bob	$75
+Alice	alice@example.com	sends	Dana	$25
+```
+
+Rows with `sends` are added to the donor’s email. When the script reaches a row with `listed`, it sends the completed email to that donor.
+
+### Email Contents
+
+Each distribution email includes:
+- the senders’s name
+- the recipient or recipients they should send money to
+- the amount for each recipient
+- the recipient’s payment information from `tf_info`
+- instructions to send the money or contact the recipient if delayed
+
+### Running the Script
+
+Run the script with the input file in bash. Changing which email you want to send is done on line 13/14
+
+```bash
+python3 send-emails.py input-file.csv
+```
